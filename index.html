@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#05090b"><title>SON YAYIN: 03.17 — 3D Korku Prototipi</title>
+<style>
+:root {color-scheme:dark;--cyan:#80e5da;--muted:#8da0a6;--red:#ff546a}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;height:100%;overflow:hidden;background:#050708;color:#e9f0ed;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;touch-action:none;user-select:none}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
+#vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,transparent 35%,rgba(0,0,0,.3) 70%,rgba(0,0,0,.77) 100%);z-index:3}
+#grain{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:.11;background:repeating-linear-gradient(0deg,transparent 0px,rgba(0,0,0,.2) 1px,transparent 3px),repeating-linear-gradient(90deg,transparent 0px,rgba(255,255,255,.02) 1px,transparent 2px)}
+#redflash{position:fixed;inset:0;z-index:5;pointer-events:none;opacity:0;background:radial-gradient(ellipse,transparent 12%,rgba(177,5,19,.5));transition:opacity .3s}
+#hud{position:fixed;inset:0;pointer-events:none;z-index:8;display:none}
+#top{position:absolute;top:max(13px,env(safe-area-inset-top));left:16px;right:16px;display:flex;justify-content:space-between;align-items:flex-start;gap:15px}
+#objective{background:linear-gradient(110deg,rgba(5,16,18,.82),rgba(8,16,20,.36));border-left:2px solid var(--cyan);padding:10px 13px;max-width:min(470px,75vw);box-shadow:0 4px 28px #0007;backdrop-filter:blur(9px)}
+.eyebrow{font-size:9px;letter-spacing:3px;color:var(--cyan);font-weight:900}.objective-text{font-size:clamp(12px,2vw,14px);font-weight:700;margin-top:4px;line-height:1.5}
+#meta{text-align:right;font-size:11px;letter-spacing:1.5px;color:#aec9c8;text-shadow:0 2px 6px black}#clock{font-size:21px;font-variant-numeric:tabular-nums;letter-spacing:3px;font-weight:300}
+#crosshair{position:absolute;left:50%;top:50%;width:14px;height:14px;transform:translate(-50%,-50%);opacity:.8}#crosshair:before,#crosshair:after{content:"";position:absolute;background:rgba(236,255,249,.75);box-shadow:0 0 6px #80e5da70}#crosshair:before{width:1px;height:14px;left:6.5px;top:0}#crosshair:after{width:14px;height:1px;left:0;top:6.5px}
+#prompt{position:absolute;top:calc(50% + 28px);left:50%;transform:translateX(-50%);white-space:nowrap;padding:8px 12px;background:#061416d9;border:1px solid #6dc9c366;border-radius:7px;color:#e1f9f2;font-size:12px;font-weight:700;opacity:0;transition:opacity .18s}
+#toast{position:absolute;bottom:17%;left:50%;transform:translateX(-50%);text-align:center;width:min(90vw,570px);font-weight:700;letter-spacing:.2px;font-size:clamp(13px,2.2vw,17px);text-shadow:0 2px 5px #000,0 0 15px #000;opacity:0;transition:opacity .3s;line-height:1.5}
+#foot{position:absolute;bottom:max(14px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);font-size:10px;color:#8ea6a7;text-shadow:0 2px 5px #000;white-space:nowrap}
+#phoneControls{display:none;position:fixed;inset:0;z-index:12;pointer-events:none}
+#joystick{position:absolute;bottom:max(24px,env(safe-area-inset-bottom) + 18px);left:25px;width:116px;height:116px;border-radius:50%;background:radial-gradient(circle,#9fd9d71a,#9fd9d70a);border:1px solid #8dd9d74b;pointer-events:auto;touch-action:none}
+#stick{position:absolute;left:33px;top:33px;width:48px;height:48px;border:1px solid #a3e5e298;background:#8ed9d43b;border-radius:50%;box-shadow:0 0 25px #76bbb433}
+.touchBtn{position:absolute;pointer-events:auto;background:#06171a9c;border:1px solid #99e9d0a1;color:white;border-radius:50%;font-weight:900;display:grid;place-items:center;touch-action:none;backdrop-filter:blur(5px)}
+#action{right:22px;bottom:max(44px,env(safe-area-inset-bottom) + 35px);width:78px;height:78px;font-size:13px;letter-spacing:1px}#run{right:113px;bottom:max(44px,env(safe-area-inset-bottom) + 35px);width:58px;height:58px;font-size:11px;color:#cde5dd}
+#lookhint{position:absolute;bottom:117px;right:30px;color:#a4c8c477;font-size:10px}
+#sound{pointer-events:auto;background:#06191ca6;border:1px solid #8fe1db30;color:#d5e9df;padding:8px;border-radius:8px;font-size:13px}
+.screen{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(90deg,#030606ed,#071112dd),radial-gradient(circle at 65% 45%,#13474f44,transparent 60%);overflow:auto}
+#menu:before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0 4px,#fff1 5px 6px);opacity:.12}
+.panel{position:relative;width:min(550px,100%);padding:28px 25px;background:linear-gradient(145deg,#09171ac9,#091116b5);border:1px solid #87d8d237;box-shadow:0 20px 90px #000c;border-radius:12px}
+.kicker{font-size:11px;letter-spacing:4px;color:#75e3d8;font-weight:800}.logo{font-size:clamp(40px,10vw,75px);font-weight:950;line-height:.97;letter-spacing:-3px;margin:16px 0 10px;text-shadow:0 5px 26px #5affd12e}.logo span{color:#e14d5b}.time{font-weight:300;font-size:22px;letter-spacing:7px;color:#91c7c4}.lead{margin:18px 0 22px;color:#b7c8cb;line-height:1.75;font-size:14px}.lead strong{color:white}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;border-radius:7px;border:1px solid #7ce3d2;background:linear-gradient(95deg,#74d9cc,#b8fff0);padding:14px;font-weight:900;color:#061214;cursor:pointer;font-size:14px;letter-spacing:1px}.btn:active{transform:scale(.99)}.secondary{background:#0f2527;border:1px solid #73b6b05e;color:#d4f4eb}.hint{font-size:11px;color:#91a5a8;line-height:1.8;margin:17px 0 0}
+#dialog,#end{display:none}#dialog{z-index:30;background:#02090ddc;backdrop-filter:blur(7px)}#end{z-index:31;background:radial-gradient(ellipse at 55% 50%,#250d13,#030406 75%)}#dialogTitle{font-size:21px;margin:8px 0}#dialogText{color:#cadbd7;line-height:1.7;font-size:14px}#choices{display:grid;gap:10px;margin-top:17px}.choice{border:1px solid #8cbbba6b;background:#12252ab8;color:#d9f6f1;border-radius:7px;text-align:left;padding:13px 15px;font-size:13px;font-weight:700;cursor:pointer}
+#endingTitle{font-size:clamp(30px,6vw,52px);line-height:1.1;margin:18px 0}#endingDesc{line-height:1.75;color:#c9d4d2}
+@media (pointer:coarse){#phoneControls.active{display:block}#foot{display:none}#top{left:12px;right:12px}#objective{max-width:73vw;padding:8px 10px}#clock{font-size:17px}#meta{font-size:9px}#toast{bottom:26%;} }
+@media(max-width:430px){.panel{padding:23px 20px}.logo{letter-spacing:-2px}.lead{font-size:13px}#joystick{left:16px;bottom:29px;width:105px;height:105px}#stick{left:29px;top:29px;width:45px;height:45px}#action{right:16px;bottom:43px}#run{right:104px;bottom:45px}#lookhint{display:none}}
+</style></head>
+<body>
+<canvas id="gl"></canvas><div id="vignette"></div><div id="grain"></div><div id="redflash"></div>
+<div id="hud"><div id="top"><div id="objective"><div class="eyebrow">GÖREV // 01</div><div class="objective-text" id="objectiveText">Bilgisayarı incele.</div></div><div id="meta"><button id="sound" title="Sesi aç/kapat">♫ AÇIK</button><div id="clock">03:17</div><div>SON YAYIN • V0.1</div></div></div><div id="crosshair"></div><div id="prompt"></div><div id="toast"></div><div id="foot">WASD: Yürü · Fare: Bak · E: Etkileşim · Shift: Koş · ESC: İmleç</div></div>
+<div id="phoneControls"><div id="joystick"><div id="stick"></div></div><div id="lookhint">SAĞDA KAYDIR: BAK</div><button id="run" class="touchBtn">KOŞ</button><button id="action" class="touchBtn">İNCELE</button></div>
+<div id="menu" class="screen"><div class="panel"><div class="kicker">WEIZEND GAMES SUNAR</div><h1 class="logo">SON <span>YAYIN</span></h1><div class="time">03:17</div><p class="lead">Canlı yayın sona ermişti. Ama sohbet hâlâ akıyordu.<br><br><strong>“Sakın arkana bakma.”</strong><br><br>Birinci şahıs 3D psikolojik korku prototipi. Kulaklık tavsiye edilir.</p><button id="start" class="btn">▶ OYUNA BAŞLA</button><p class="hint">📱 Telefon: Sol joystick ile yürü, sağ tarafta kaydırarak bak, İNCELE ile etkileşim kur.<br>💻 PC: WASD + fare, E ile etkileşim. <br>⚠ Kısa korku sahneleri ve ani sesler içerir. Kaydetme özelliği yoktur.</p></div></div>
+<div id="dialog" class="screen"><div class="panel"><div class="kicker" id="dialogTag">SİSTEM MESAJI</div><h2 id="dialogTitle">BİR MESAJ VAR</h2><p id="dialogText"></p><div id="choices"></div></div></div>
+<div id="end" class="screen"><div class="panel"><div class="kicker" id="endingTag">SON // 01</div><h1 id="endingTitle">YAYIN SONLANDI</h1><p id="endingDesc"></p><button class="btn" id="again">↻ TEKRAR OYNA</button></div></div>
+<script>
+(()=>{'use strict';
+// SON YAYIN: 03.17 — Kütüphanesiz gerçek zamanlı WebGL 3D motoru.
+const $=id=>document.getElementById(id),canvas=$('gl'),gl=canvas.getContext('webgl',{antialias:true,alpha:false,powerPreference:'high-performance'});
+if(!gl){$('menu').querySelector('.lead').innerHTML='Bu tarayıcı WebGL desteklemiyor. Chrome veya güncel bir mobil tarayıcıyla yeniden aç.'; $('start').disabled=true;return;}
+const vs=`attribute vec3 aPos;attribute vec3 aNormal;attribute vec2 aUV;uniform mat4 uM,uV,uP;varying vec3 vP,vN;varying vec2 vUV;void main(){vec4 p=uM*vec4(aPos,1.);vP=p.xyz;vN=normalize(mat3(uM)*aNormal);vUV=aUV;gl_Position=uP*uV*p;}`;
+const fs=`precision mediump float;varying vec3 vP,vN;varying vec2 vUV;uniform vec3 uColor,uEye;uniform float uKind,uTime,uBright,uScare;uniform sampler2D uImage;uniform float uHasImage;uniform vec3 uLamp0,uLamp1,uLamp2;float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453123);}void main(){
+if(uHasImage>.5){vec4 t=texture2D(uImage,vUV);gl_FragColor=vec4(t.rgb,1.);return;}
+vec3 n=normalize(vN);vec3 base=uColor;float grain=hash(floor(vP.xz*19. + vP.y*5.));
+if(uKind<.5){base*=.89+.18*grain;float seam=step(.965,fract(vP.x*1.2+vP.y*.27));base*=1.-seam*.17;}
+else if(uKind<1.5){float pl=step(.965,fract(vP.z*.55));base*=.86+.22*grain-pl*.25;}
+else if(uKind<2.5){base*=.8+.34*grain;}
+else if(uKind<3.5){base*=.82+.26*hash(floor(vP.xz*17.));}
+if(uKind>4.5&&uKind<5.5){gl_FragColor=vec4(base,1.);return;}
+vec3 l0=uLamp0-vP,l1=uLamp1-vP,l2=uLamp2-vP,torch=uEye-vP;
+float d0=length(l0),d1=length(l1),d2=length(l2),dt=length(torch);
+float intensity=.10+ .82*max(dot(n,normalize(l0)),0.)/(1.+.13*d0*d0)+ .78*max(dot(n,normalize(l1)),0.)/(1.+.12*d1*d1)+ .7*max(dot(n,normalize(l2)),0.)/(1.+.13*d2*d2);
+float torchLambert=max(dot(n,normalize(torch)),0.);intensity+=1.65*torchLambert/(1.+.08*dt*dt);
+intensity*=uBright;intensity=clamp(intensity,.04,1.65);
+vec3 rgb=base*intensity;
+rgb += base*.10*vec3(.17,.42,.54)/(1.+.04*d0*d0);
+rgb += vec3(.14,.005,.014)*uScare/(1.+.02*d2*d2);
+float dist=distance(vP,uEye);float fog=clamp((dist-5.)/27.,0.,.72);rgb=mix(rgb,vec3(.014,.026,.029),fog);
+gl_FragColor=vec4(rgb,1.);}`;
+function shader(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s}
+let prog=gl.createProgram();gl.attachShader(prog,shader(gl.VERTEX_SHADER,vs));gl.attachShader(prog,shader(gl.FRAGMENT_SHADER,fs));gl.linkProgram(prog);if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(prog));gl.useProgram(prog);
+const a=['aPos','aNormal','aUV'].map(x=>gl.getAttribLocation(prog,x));const U={};['uM','uV','uP','uColor','uEye','uKind','uTime','uBright','uScare','uImage','uHasImage','uLamp0','uLamp1','uLamp2'].forEach(x=>U[x]=gl.getUniformLocation(prog,x));
+const mat=(x=1)=>new Float32Array([x,0,0,0,0,x,0,0,0,0,x,0,0,0,0,1]);
+function model(x,y,z,w,h,d,rot=0){let c=Math.cos(rot),s=Math.sin(rot);return new Float32Array([c*w,0,-s*w,0,0,h,0,0,s*d,0,c*d,0,x,y,z,1])}
+function perspective(fov,aspect,near,far){let f=1/Math.tan(fov/2),nf=1/(near-far);return new Float32Array([f/aspect,0,0,0,0,f,0,0,0,0,(far+near)*nf,-1,0,0,2*far*near*nf,0])}
+function lookAt(e,c){let zx=e[0]-c[0],zy=e[1]-c[1],zz=e[2]-c[2],zl=Math.hypot(zx,zy,zz);zx/=zl;zy/=zl;zz/=zl;let xx=zz,xz=-zx,xl=Math.hypot(xx,xz);xx/=xl;xz/=xl;let yx=zy*xz,yy=zz*xx-zx*xz,yz=-zy*xx;return new Float32Array([xx,yx,zx,0,0,yy,zy,0,xz,yz,zz,0,-xx*e[0]-xz*e[2],-yx*e[0]-yy*e[1]-yz*e[2],-zx*e[0]-zy*e[1]-zz*e[2],1]);}
+// Unit cube, face-specific normals/UVs, 36 triangles.
+let verts=[];function face(p,n){const uv=[[0,0],[1,0],[1,1],[0,1]],indices=[0,1,2,0,2,3];for(let i of indices)verts.push(...p[i],...n,...uv[i]);}
+face([[-.5,-.5,.5],[.5,-.5,.5],[.5,.5,.5],[-.5,.5,.5]],[0,0,1]);face([[.5,-.5,-.5],[-.5,-.5,-.5],[-.5,.5,-.5],[.5,.5,-.5]],[0,0,-1]);face([[.5,-.5,.5],[.5,-.5,-.5],[.5,.5,-.5],[.5,.5,.5]],[1,0,0]);face([[-.5,-.5,-.5],[-.5,-.5,.5],[-.5,.5,.5],[-.5,.5,-.5]],[-1,0,0]);face([[-.5,.5,.5],[.5,.5,.5],[.5,.5,-.5],[-.5,.5,-.5]],[0,1,0]);face([[-.5,-.5,-.5],[.5,-.5,-.5],[.5,-.5,.5],[-.5,-.5,.5]],[0,-1,0]);
+const vb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(verts),gl.STATIC_DRAW);for(let i=0;i<3;i++){gl.enableVertexAttribArray(a[i]);gl.vertexAttribPointer(a[i],[3,3,2][i],gl.FLOAT,false,32,[0,12,24][i])}
+const C={wall:[.18,.24,.23],ceiling:[.105,.15,.145],floor:[.21,.17,.14],wood:[.22,.15,.10],brown:[.35,.22,.14],dark:[.045,.075,.08],iron:[.21,.25,.26],silver:[.39,.47,.45],red:[.8,.07,.09],teal:[.19,.86,.79],white:[.65,.72,.67],black:[.017,.023,.03],glass:[.055,.14,.155],skin:[.78,.75,.65]};
+const meshes=[],walls=[],interactables=[],ghostMeshes=[];let door1,door2,fuseMesh,ghostVisible=false,scareAt=0;
+function box(x,y,z,w,h,d,color=C.wall,kind=0,solid=false,rot=0){let b={x,y,z,w,h,d,rot,color,kind,hidden:false};meshes.push(b);if(solid)walls.push({x,z,w,d});return b}
+function wall(x,y,z,w,h,d,color=C.wall){return box(x,y,z,w,h,d,color,0,true)}
+function textTexture(draw){const cv=document.createElement('canvas');cv.width=512;cv.height=256;const ctx=cv.getContext('2d');draw(ctx,cv);const tx=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tx);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,1);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cv);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);return tx}
+let streamTexture;
+function paintStream(){streamTexture=textTexture((g)=>{g.fillStyle='#041318';g.fillRect(0,0,512,256);g.fillStyle='#18484d';g.fillRect(0,0,512,32);g.fillStyle='#dff';g.font='bold 18px sans-serif';g.fillText('WEIZEND  •  CANLI',17,23);g.fillStyle='#e14455';g.fillText('●',444,23);g.fillStyle='#96b7b9';g.font='13px monospace';g.fillText('SOHBET / 03:17',18,62);g.fillStyle='#69d8c7';g.font='bold 19px monospace';g.fillText('weizend:',18,110);g.fillStyle='#edf8ee';g.fillText('sakın arkana bakma',18,139);g.fillStyle='#d04e54';g.font='13px monospace';g.fillText('● BAĞLANTI KESİLDİ',18,217);});}
+paintStream();
+function item(x,y,z,label,action,reach=2.7){interactables.push({x,y,z,label,action,reach})}
+// 3D LEVEL: streamer bedroom (z +4.5 .. -4.5)
+box(0,-.18,0,9,.35,9,C.floor,1);box(0,3.66,0,9,.24,9,C.ceiling,0);
+wall(-4.5,1.72,0,.25,3.5,9);wall(4.5,1.72,0,.25,3.5,9);wall(0,1.72,4.5,9,3.5,.25);
+wall(-2.78,1.72,-4.5,3.46,3.5,.25);wall(2.78,1.72,-4.5,3.46,3.5,.25);wall(0,3.08,-4.5,2.1,.78,.25);
+door1=box(.02,1.08,-4.4,1.92,2.15,.19,C.brown,2,true);box(-1.03,1.2,-4.3,.13,2.5,.23,C.dark,2);box(1.03,1.2,-4.3,.13,2.5,.23,C.dark,2);
+// Hallway z -4.5 .. -16
+box(0,-.18,-10.25,3.4,.35,11.5,C.floor,1);box(0,3.66,-10.25,3.4,.24,11.5,C.ceiling);
+wall(-1.7,1.72,-10.25,.24,3.5,11.5);wall(1.7,1.72,-10.25,.24,3.5,11.5);
+wall(-1.3,1.72,-16,.9,3.5,.22);wall(1.3,1.72,-16,.9,3.5,.22);wall(0,3.08,-16,1.85,.8,.22);
+door2=box(0,1.08,-15.9,1.82,2.15,.18,C.iron,2,true);
+// The final chamber
+box(0,-.18,-20,9,.35,8,C.floor,1);box(0,3.66,-20,9,.24,8,C.ceiling);
+wall(-4.5,1.72,-20,.25,3.5,8);wall(4.5,1.72,-20,.25,3.5,8);wall(0,1.72,-24,9,3.5,.25);
+wall(-3.16,1.72,-16,2.65,3.5,.22);wall(3.16,1.72,-16,2.65,3.5,.22);
+function leg(x,z,h=.73){box(x,h/2,z,.11,h,.11,C.iron,2)}
+// Desk and gamer setup
+box(0,.72,-2,3,.13,1.1,C.brown,3);for(let x of [-1.35,1.35])for(let z of [-2.45,-1.55])leg(x,z);
+box(0,1.25,-2.35,.12,.9,.10,C.dark,2);box(0,1.63,-2.46,1.48,.84,.11,C.black,2);box(0,1.63,-2.385,1.32,.69,.03,C.glass,4);let screen=box(0,1.63,-2.36,1.24,.64,.006,C.white,5);screen.texture=streamTexture;
+box(0,.82,-1.65,.90,.055,.28,C.dark,2);for(let i=0;i<9;i++)box(-.37+i*.09,.855,-1.62,.055,.012,.04,i%4?C.silver:C.teal,5);
+box(.75,.83,-1.6,.15,.034,.24,C.black,2);
+box(1.17,1.12,-2.24,.45,.78,.78,C.black,2);box(1.4,1.17,-1.87,.017,.43,.035,C.teal,5);
+box(-.13,.48,.25,.64,.12,.64,C.dark,2);box(-.13,.86,.49,.66,.83,.13,C.dark,2);box(-.13,.25,.25,.1,.44,.1,C.iron,2);
+// Purple streamer led light strips
+box(-4.36,2.74,-1.5,.06,.07,4,C.teal,5);box(4.36,2.74,1.7,.06,.07,4,C.red,5);
+// Bookshelf and scattered books
+box(3.45,1.42,-1.05,1.1,2.65,.4,C.wood,3);for(let i=0;i<4;i++)box(3.45,.52+i*.6,-1.0,1.11,.11,.43,C.brown,3);for(let i=0;i<13;i++)box(2.99+i*.07,.78+(i%3)*.6,-.99,.055,.28+(i%4)*.04,.22,i%3===0?C.red:i%4===0?C.teal:C.white,2);
+// Bed / nightstand
+box(-2.85,.43,1.46,2.2,.56,3.2,C.wood,3);box(-2.85,.79,1.5,2.0,.18,2.9,C.white,1);box(-2.85,.91,2.5,.8,.13,.5,C.silver,1);box(-1.25,.55,1.7,.68,.92,.65,C.wood,3);
+// Ceiling lamps (bulbs are emissive)
+box(0,3.25,0,.16,.7,.16,C.iron,2);box(0,2.85,0,.6,.08,.6,C.teal,5);
+for(let z of [-7.2,-11.5,-14.5]){box(0,3.3,z,.10,.55,.10,C.iron,2);box(0,2.96,z,.52,.08,.52,z===-11.5?C.red:C.white,5)}
+// Hall details: breaker at end, framed disturbing silhouette
+box(-1.53,1.65,-7.7,.12,1.35,.88,C.wood,3);box(-1.46,1.65,-7.7,.04,1.14,.67,C.black,2);
+box(1.5,1.33,-10.05,.17,.65,.52,C.iron,2);box(1.4,1.38,-10.05,.09,.28,.25,C.red,5);
+// Fuse item at z -9.55, reachable
+fuseMesh=box(.98,.6,-9.55,.17,.32,.14,C.teal,5);box(.96,.37,-9.55,.44,.11,.44,C.iron,2);
+// End hallway panel
+box(1.53,1.40,-14.45,.18,.92,.65,C.iron,2);const panelLamp=box(1.36,1.72,-14.45,.06,.14,.13,C.red,5);
+// Final room: ominous broadcast booth
+box(0,.75,-21.85,2.5,.15,1,C.iron,2);for(let x of [-1.1,1.1])for(let z of [-22.1,-21.55])leg(x,z);
+box(0,1.36,-22.1,.14,1,.18,C.iron,2);box(0,1.68,-22.0,1.76,1.14,.18,C.black,2);box(0,1.68,-21.87,1.59,.93,.03,C.red,5);
+box(0,2.85,-20,.83,.05,.83,C.red,5);
+// Ritual ring on ground, like a broadcast antenna
+for(let i=0;i<30;i++){let an=i*Math.PI*2/30;box(Math.sin(an)*2,.035,-19+Math.cos(an)*2,.3,.015,.065,i%2===0?C.red:C.iron,5, false,an)}
+for(let x of [-3.3,3.3])for(let z of [-22.5,-17.4]){box(x,1.2,z,.45,2.4,.46,C.iron,2);box(x,2.50,z,.35,.11,.38,C.red,5)}
+// ghost: fade/disappear when encountered
+const g0=box(0,1.0,-12.3,.78,1.85,.42,C.black,2);const g1=box(0,2.02,-12.3,.47,.53,.39,C.skin,2);const g2=box(-.13,2.08,-12.06,.07,.07,.07,C.red,5);const g3=box(.13,2.08,-12.06,.07,.07,.07,C.red,5);ghostMeshes.push(g0,g1,g2,g3);ghostMeshes.forEach(g=>g.hidden=true);
+// Draw object labels with true 3D proximity and view-angle tests.
+let stage=0,playing=false,modal=false,haveFuse=false,door1Open=false,door2Open=false,ghostDone=false,focused=null,toastTimer=0,context;
+const objectives=['Bilgisayar ekranını incele.','Koridora çık ve sigortayı bul.','Sigortayı elektrik panosuna yerleştir.','Yayın odasının sonundaki terminale ulaş.'];
+function objText(){let id=Math.min(stage,3);$('objective').querySelector('.eyebrow').textContent='GÖREV // 0'+(id+1);$('objectiveText').textContent=objectives[id];}
+function showToast(s,dur=3500){$('toast').textContent=s;$('toast').style.opacity=1;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').style.opacity=0,dur)}
+function dialogue(tag,title,html,opts){modal=true;$('dialog').style.display='flex';$('dialogTag').textContent=tag;$('dialogTitle').textContent=title;$('dialogText').innerHTML=html;let ch=$('choices');ch.innerHTML='';for(let opt of opts){let b=document.createElement('button');b.className='choice';b.textContent=opt.label;b.onclick=()=>{ch.innerHTML='';$('dialog').style.display='none';modal=false;opt.onClick?.()};ch.appendChild(b)}document.exitPointerLock?.();}
+function scare(){if(ghostDone)return;ghostDone=true;ghostVisible=true;ghostMeshes.forEach(b=>b.hidden=false);scareAt=performance.now();$('redflash').style.opacity='.84';sting();showToast('SENİ GÖREBİLİYORUM.',2200);setTimeout(()=>{$('redflash').style.opacity='0'},520);setTimeout(()=>{ghostVisible=false;ghostMeshes.forEach(b=>b.hidden=true)},1900)}
+item(0,1.65,-2.36,'Bilgisayarı incele',()=>{if(stage!==0)return;stage=1;door1Open=true;objText();dialogue('SOHBET // BİLİNMEYEN','BU MESAJI KİM YAZDI?','<strong>weizend:</strong> Sakın arkana bakma.<br><br><strong>??? :</strong> Sigorta koridorda. Geç olmadan ışıkları aç.<br><br>Kapının kilidi kendiliğinden açıldı.',[{label:'Koridora git',onClick:()=>{showToast('Koridor kapısı açıldı.')}}])},3.0);
+item(.98,.68,-9.55,'Sigortayı al',()=>{if(stage!==1)return;haveFuse=true;stage=2;fuseMesh.hidden=true;objText();showToast('SİGORTA ALINDI · Koridorun sonundaki panele git.');ping()},2.1);
+item(1.40,1.5,-14.45,'Elektrik panosunu çalıştır',()=>{if(stage!==2)return;stage=3;door2Open=true;panelLamp.color=C.teal;objText();showToast('ELEKTRİK GELDİ. KAPI AÇILDI.');ping()},2.9);
+item(0,1.7,-21.86,'Son yayını aç',()=>{if(stage!==3)return;dialogue('SİSTEM // SON KARAR','03.17 // YAYIN HÂLÂ AÇIK','Monitörde kendi yüzünü görüyorsun. Ardındaki karanlık, ekrandaki karanlıktan farklı.<br><br><strong>Üç seçeneğin var. Her biri farklı bir son.</strong>',[
+{label:'1. Yayını kapat',onClick:()=>ending(1,'SESSİZLİK','Yayını kapattın. Tüm ekranlar söndü. Sessizlik bir süre huzurluydu... ta ki kapanmış monitörden kendi sesini duyana kadar.')},
+{label:'2. Kamerayı arkana çevir',onClick:()=>ending(2,'GÖRÜNMEYEN İZLEYİCİ','Kamera döndü. Oda bomboştu. Ama sohbette 1 izleyici yazıyordu. O izleyicinin adı sendin.')},
+{label:'3. Odayı terk et',onClick:()=>ending(3,'SON ÇIKIŞ','Kapıyı açtın ve dışarı çıktın. Koridor yine aynı odaya çıktı. Saat hâlâ 03.17 idi.')}])},3.15);
+// Door collision is dynamic and deliberately simplified for mobile reliability.
+const player={x:0,y:1.65,z:2.5,yaw:0,pitch:0},pressed={},j={x:0,y:0},lookTouch={id:null,x:0,y:0},joy={id:null},mobile=matchMedia('(pointer:coarse)').matches;
+let sprint=false,tick=performance.now(),walkphase=0,time=0,motion=0,flash=1,soundOn=true,audioCtx=null,noiseNode=null,sounds=[];
+function initSound(){if(audioCtx)return;try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();let n=audioCtx.createBuffer(1,audioCtx.sampleRate*2,audioCtx.sampleRate),a=n.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=(Math.random()*2-1)*.08;let src=audioCtx.createBufferSource();src.buffer=n;src.loop=true;let fl=audioCtx.createBiquadFilter();fl.type='lowpass';fl.frequency.value=160;let gain=audioCtx.createGain();gain.gain.value=.3;src.connect(fl);fl.connect(gain);gain.connect(audioCtx.destination);src.start();noiseNode=gain;}catch(e){soundOn=false}}
+function sound(freq=300,seconds=.3,kind='sine',vol=.18){if(!soundOn)return;initSound();if(!audioCtx)return;audioCtx.resume();let osc=audioCtx.createOscillator(),g=audioCtx.createGain(),now=audioCtx.currentTime;osc.type=kind;osc.frequency.setValueAtTime(freq,now);osc.frequency.exponentialRampToValueAtTime(Math.max(30,freq*.37),now+seconds);g.gain.setValueAtTime(vol,now);g.gain.exponentialRampToValueAtTime(.001,now+seconds);osc.connect(g);g.connect(audioCtx.destination);osc.start(now);osc.stop(now+seconds+.04)}
+function ping(){sound(750,.45,'sine',.07)}function sting(){sound(88,1.2,'sawtooth',.23);setTimeout(()=>sound(220,.6,'square',.075),150)}
+$('sound').onclick=()=>{soundOn=!soundOn;$('sound').textContent=soundOn?'♫ AÇIK':'♫ KAPALI';if(noiseNode)noiseNode.gain.value=soundOn?.3:0;};
+function ending(n,title,desc){playing=false;modal=true;$('hud').style.display='none';$('phoneControls').classList.remove('active');$('end').style.display='flex';$('endingTag').textContent=`SON // 0${n}`;$('endingTitle').textContent=title;$('endingDesc').textContent=desc+'\n\n SON YAYIN: 03.17 — 3D PROTOTİP SONU';sound(70,2,'sawtooth',.1);document.exitPointerLock?.()}
+function start(){stage=0;haveFuse=false;door1Open=false;door2Open=false;ghostDone=false;ghostVisible=false;ghostMeshes.forEach(b=>b.hidden=true);fuseMesh.hidden=false;panelLamp.color=C.red;player.x=0;player.z=2.5;player.yaw=0;player.pitch=0;time=0;walkphase=0;modal=false;playing=true;objText();$('menu').style.display='none';$('end').style.display='none';$('dialog').style.display='none';$('hud').style.display='block';$('phoneControls').classList.toggle('active',mobile);initSound();if(audioCtx)audioCtx.resume();if(!mobile){canvas.requestPointerLock?.()}setTimeout(()=>showToast('03.17 — Yayın kesildi. Bilgisayara yaklaş.'),300)}
+$('start').onclick=start;$('again').onclick=start;
+const keys=['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowLeft','ArrowDown','ArrowRight','ShiftLeft','ShiftRight','KeyE','Space'];
+window.addEventListener('keydown',e=>{if(keys.includes(e.code))e.preventDefault();pressed[e.code]=true;if((e.code==='KeyE'||e.code==='Space')&&!e.repeat)interact();});window.addEventListener('keyup',e=>pressed[e.code]=false);
+window.addEventListener('blur',()=>{for(let k in pressed)pressed[k]=false;j.x=j.y=0;sprint=false});
+canvas.addEventListener('click',()=>{if(playing&&!modal&&!mobile&&document.pointerLockElement!==canvas)canvas.requestPointerLock?.()});
+document.addEventListener('mousemove',e=>{if(playing&&!modal&&document.pointerLockElement===canvas){player.yaw+=e.movementX*.0021;player.pitch=Math.max(-1.24,Math.min(1.24,player.pitch-e.movementY*.00185))}});
+const joyEl=$('joystick'),stick=$('stick');function joystickMove(e){const r=joyEl.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,l=Math.hypot(dx,dy),m=Math.min(42,l),ux=l?dx/l:0,uy=l?dy/l:0;j.x=ux*m/42;j.y=uy*m/42;stick.style.transform=`translate(${ux*m}px,${uy*m}px)`;}
+joyEl.addEventListener('pointerdown',e=>{if(!playing||modal)return;joy.id=e.pointerId;joyEl.setPointerCapture(e.pointerId);joystickMove(e)});joyEl.addEventListener('pointermove',e=>{if(joy.id===e.pointerId)joystickMove(e)});function resetJoy(){joy.id=null;j.x=j.y=0;stick.style.transform='translate(0,0)'}joyEl.addEventListener('pointerup',resetJoy);joyEl.addEventListener('pointercancel',resetJoy);
+canvas.addEventListener('pointerdown',e=>{if(!mobile||!playing||modal||e.clientX<innerWidth*.32)return;lookTouch={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId)});canvas.addEventListener('pointermove',e=>{if(!mobile||lookTouch.id!==e.pointerId||!playing||modal)return;let dx=e.clientX-lookTouch.x,dy=e.clientY-lookTouch.y;lookTouch.x=e.clientX;lookTouch.y=e.clientY;player.yaw+=dx*.0045;player.pitch=Math.max(-1.24,Math.min(1.24,player.pitch-dy*.0036))});canvas.addEventListener('pointerup',e=>{if(lookTouch.id===e.pointerId)lookTouch.id=null});canvas.addEventListener('pointercancel',e=>{if(lookTouch.id===e.pointerId)lookTouch.id=null});
+$('action').addEventListener('pointerdown',e=>{e.preventDefault();interact()});$('run').addEventListener('pointerdown',e=>{e.preventDefault();sprint=true});for(let t of ['pointerup','pointercancel','pointerleave'])$('run').addEventListener(t,()=>sprint=false);
+function interact(){if(!playing||modal)return;if(focused){focused.action()}else{showToast('Bir nesneye yaklaş ve ona doğru bak.',1700)}}
+function canEnter(x,z){const radius=.29;if(x<-4.2||x>4.2||z>4.2||z<-23.7)return false;
+// Dynamically enforced doors.
+if(!door1Open&&Math.abs(z+4.4)<.27&&Math.abs(x)<1.07)return false;
+if(!door2Open&&Math.abs(z+15.9)<.27&&Math.abs(x)<1.0)return false;
+// All static walls except doorway panels.
+for(let w of walls){if(w===door1.collide||w===door2.collide)continue;
+if((Math.abs(x-w.x)<w.w/2+radius)&&(Math.abs(z-w.z)<w.d/2+radius))return false}
+return true}
+// Prevent entering furniture: softly block rectangular obstacles close to floor.
+const obstacles=[{x:0,z:-2,w:3.05,d:1.2},{x:-2.85,z:1.46,w:2.2,d:3.2},{x:3.45,z:-1.05,w:1.2,d:.5},{x:0,z:-21.85,w:2.6,d:1.1}];
+function blocked(x,z){if(!canEnter(x,z))return true;for(let o of obstacles)if(Math.abs(x-o.x)<o.w/2+.22&&Math.abs(z-o.z)<o.d/2+.22)return true;return false}
+function update(dt){let f=(pressed.KeyW||pressed.ArrowUp?1:0)-(pressed.KeyS||pressed.ArrowDown?1:0)-j.y,r=(pressed.KeyD||pressed.ArrowRight?1:0)-(pressed.KeyA||pressed.ArrowLeft?1:0)+j.x;let len=Math.hypot(f,r);if(len>1){f/=len;r/=len}let speed=(pressed.ShiftLeft||pressed.ShiftRight||sprint)?4:2.45;let vx=(Math.sin(player.yaw)*f+Math.cos(player.yaw)*r)*speed*dt,vz=(-Math.cos(player.yaw)*f+Math.sin(player.yaw)*r)*speed*dt;if(!blocked(player.x+vx,player.z))player.x+=vx;if(!blocked(player.x,player.z+vz))player.z+=vz;motion=len;walkphase+=dt*len*speed*7;
+if(stage===1&&!ghostDone&&player.z<-6.4)scare();
+const forward=[Math.sin(player.yaw)*Math.cos(player.pitch),Math.sin(player.pitch),-Math.cos(player.yaw)*Math.cos(player.pitch)];focused=null;let best=0.37;
+for(let o of interactables){if(o.label==='Bilgisayarı incele'&&stage!==0)continue;if(o.label==='Sigortayı al'&&stage!==1)continue;if(o.label==='Elektrik panosunu çalıştır'&&stage!==2)continue;if(o.label==='Son yayını aç'&&stage!==3)continue;let dx=o.x-player.x,dy=o.y-player.y,dz=o.z-player.z,dist=Math.hypot(dx,dy,dz);if(dist>o.reach)continue;let dot=(dx*forward[0]+dy*forward[1]+dz*forward[2])/dist;if(dot>best){best=dot;focused=o}}
+$('prompt').style.opacity=focused?1:0;$('prompt').textContent=focused?(mobile?'İNCELE: ':'[E] ')+focused.label:'';
+// Door panels swing into the rooms once unlocked.
+door1.hidden=door1Open;door2.hidden=door2Open;
+}
+function resize(){let dpr=Math.min(devicePixelRatio||1,mobile?1.4:1.7),w=Math.round(innerWidth*dpr),h=Math.round(innerHeight*dpr);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;gl.viewport(0,0,w,h)}}
+function render(now){resize();let d=Math.min(.05,(now-tick)/1000||0);tick=now;time+=d;if(playing&&!modal)update(d);gl.enable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.clearColor(.012,.023,.026,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+const bob=playing?Math.sin(walkphase)*.035*motion:0;let eye=[player.x,player.y+bob,player.z],fwd=[Math.sin(player.yaw)*Math.cos(player.pitch),Math.sin(player.pitch),-Math.cos(player.yaw)*Math.cos(player.pitch)];const target=[eye[0]+fwd[0],eye[1]+fwd[1],eye[2]+fwd[2]];
+gl.useProgram(prog);gl.uniformMatrix4fv(U.uV,false,lookAt(eye,target));gl.uniformMatrix4fv(U.uP,false,perspective(Math.PI/2.9,canvas.width/canvas.height,.045,62));gl.uniform3fv(U.uEye,eye);gl.uniform1f(U.uTime,time);gl.uniform1f(U.uScare,ghostVisible?1:0);gl.uniform1f(U.uBright,Math.max(.4,.91+.10*Math.sin(time*2.3)+(ghostVisible?Math.sin(time*40)*.3:0)));
+gl.uniform3fv(U.uLamp0,[0,2.65,-1.6]);gl.uniform3fv(U.uLamp1,[0,2.9,-8.0]);gl.uniform3fv(U.uLamp2,[0,2.8,-20]);gl.uniform1i(U.uImage,0);
+for(let m of meshes){if(m.hidden)continue;gl.uniformMatrix4fv(U.uM,false,model(m.x,m.y,m.z,m.w,m.h,m.d,m.rot));gl.uniform3fv(U.uColor,m.color);gl.uniform1f(U.uKind,m.kind);gl.uniform1f(U.uHasImage,m.texture?1:0);if(m.texture){gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,m.texture)}gl.drawArrays(gl.TRIANGLES,0,36)}requestAnimationFrame(render)}
+// Fix dynamically gated doors without adding invisible collision after they open.
+walls.splice(walls.indexOf(door1),1);walls.splice(walls.indexOf(door2),1);
+window.__sonYayin={state:()=>({stage,playing,modal,player:{...player},haveFuse,door1Open,door2Open,focused:focused?.label}),start,interact,moveTo:(x,z,yaw=0)=>{player.x=x;player.z=z;player.yaw=yaw;player.pitch=0}};
+requestAnimationFrame(render);
+})();
+</script>
+</body></html>
